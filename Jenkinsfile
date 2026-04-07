@@ -14,9 +14,18 @@ pipeline {
             }
         }
 
-        stage('Run Container') {
+        stage('Deploy to EC2') {
             steps {
-                sh 'docker run -d -p 3000:3000 devops-app'
+                sshagent(['ec2-key']) {
+                    sh '''
+                    ssh -o StrictHostKeyChecking=no ubuntu@54.235.51.242 << EOF
+                    docker stop devops-app || true
+                    docker rm devops-app || true
+                    docker build -t devops-app /home/ubuntu/devops-project
+                    docker run -d -p 3000:3000 devops-app
+                    EOF
+                    '''
+                }
             }
         }
     }
